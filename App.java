@@ -44,7 +44,7 @@ public class App {
 
         run();
 
-        new ReceiveUDP(socket, myPort).start();
+        new ReceiveUDP(myPort).start();
         
         // debug_method();
 

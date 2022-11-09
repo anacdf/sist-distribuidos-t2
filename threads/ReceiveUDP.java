@@ -12,7 +12,7 @@ public class ReceiveUDP extends Thread {
     private String receivedData;
     private DatagramPacket packet;
 
-    public ReceiveUDP(DatagramSocket eSocket, int port) throws SocketException {
+    public ReceiveUDP(int port) throws SocketException {
         socket = new DatagramSocket(port);
     }
     
