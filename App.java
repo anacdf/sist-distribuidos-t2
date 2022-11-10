@@ -96,7 +96,7 @@ public class App {
         print_vetorial_clock("R", null, receivedId, receivedClock);
     }
 
-    private static void multicast_start() throws IOException {
+    private static void multicast_start() throws IOException, InterruptedException {
         MulticastSocket socket = new MulticastSocket(5000);
         byte[] resource = new byte[1024];
         InetAddress address = InetAddress.getByName("230.0.0.1");
@@ -112,6 +112,7 @@ public class App {
 
         while (true) {
             System.out.println("Waiting processes answer multicast...");
+
             packet = new DatagramPacket(resource, resource.length);
 
             try {
@@ -135,20 +136,19 @@ public class App {
 
             boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
 
-            packet = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
-            socket.send(packet);
-
-            System.out.println("MATCH " + match);
-
             if (match) {
                 System.out.println("MATCH");
+                DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
+                socket.send(packetID);
                 socket.leaveGroup(address);
                 socket.close();
                 return;
             } else {
-                socket.setSoTimeout(5000);
+                System.out.println("NOT MATCH");
+                DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
+                socket.send(packetID);
+                Thread.sleep(3000);
             }
-
         }
     }
 
