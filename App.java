@@ -98,7 +98,7 @@ public class App {
 
     private static void multicast_start() throws IOException {
         MulticastSocket socket = new MulticastSocket(5000);
-        byte[] resource = new byte[256];
+        byte[] resource = new byte[1024];
         InetAddress address = InetAddress.getByName("230.0.0.1");
         DatagramPacket packet;
 
@@ -111,41 +111,44 @@ public class App {
         socket.joinGroup(address);
 
         while (true) {
+            System.out.println("Waiting processes answer multicast...");
+            packet = new DatagramPacket(resource, resource.length);
+
             try {
-                System.out.println("Waiting processes answer multicast...");
-                packet = new DatagramPacket(resource, resource.length);
+                socket.setSoTimeout(5000);
                 socket.receive(packet);
-
-                String received_process_id = new String(packet.getData(), 0, packet.getLength());
-
-                System.out.println("received_process_id " + received_process_id);
-
-                int received_process_id_int = Integer.parseInt(received_process_id);
-
-                ready[received_process_id_int] = 1;
-
-                // for (int i : ready) {
-                //     System.out.print(i);
-                // }
-
-                boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
-
-                socket.send(
-                        new DatagramPacket(Integer.toString(myProcessId).getBytes(), resource.length, address, 5000));
-
-                System.out.println("MATCH " + match);
-
-                if (match) {
-                    System.out.println("MATCH");
-                    socket.leaveGroup(address);
-                    socket.close();
-                    return;
-                } else {
-                    socket.setSoTimeout(5000);
-                }
             } catch (Exception e) {
                 // TODO: handle exception
             }
+
+            String received_process_id = new String(packet.getData(), 0, packet.getLength());
+
+            System.out.println("received_process_id " + received_process_id);
+
+            try {
+                int received_process_id_int = Integer.parseInt(received_process_id);
+
+                ready[received_process_id_int] = 1;
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+
+            boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
+
+            packet = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
+            socket.send(packet);
+
+            System.out.println("MATCH " + match);
+
+            if (match) {
+                System.out.println("MATCH");
+                socket.leaveGroup(address);
+                socket.close();
+                return;
+            } else {
+                socket.setSoTimeout(5000);
+            }
+
         }
     }
 
