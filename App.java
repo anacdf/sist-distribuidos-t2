@@ -114,24 +114,19 @@ public class App {
             try {
                 System.out.println("Waiting processes answer multicast...");
                 packet = new DatagramPacket(resource, resource.length);
-                socket.setSoTimeout(5000);
                 socket.receive(packet);
-
-                System.out.println(socket.getLocalPort());
 
                 String received_process_id = new String(packet.getData(), 0, packet.getLength());
 
                 System.out.println("received_process_id " + received_process_id);
 
-                if (!received_process_id.equals("")) {
-                    int received_process_id_int = Integer.parseInt(received_process_id);
+                int received_process_id_int = Integer.parseInt(received_process_id);
 
-                    ready[received_process_id_int] = 1;
-                }
+                ready[received_process_id_int] = 1;
 
-                for (int i : ready) {
-                    System.out.print(i);
-                }
+                // for (int i : ready) {
+                //     System.out.print(i);
+                // }
 
                 boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
 
@@ -145,7 +140,9 @@ public class App {
                     socket.leaveGroup(address);
                     socket.close();
                     return;
-                } 
+                } else {
+                    socket.setSoTimeout(5000);
+                }
             } catch (Exception e) {
                 // TODO: handle exception
             }
