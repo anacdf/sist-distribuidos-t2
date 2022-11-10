@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Semaphore;
 
 import threads.ReceiveUDP;
 
@@ -29,10 +30,11 @@ public class App {
     private static String fileName;
     private static DatagramSocket socket;
     private static DatagramPacket packet;
+    private static Semaphore sem;
 
     private static ReceiveUDP receiveUDP;
 
-    public static void main(String[] args) throws FileNotFoundException, SocketException {
+    public static void main(String[] args) throws FileNotFoundException, SocketException, InterruptedException {
 
         if (args.length < 2) {
             System.out.println("Missing parameters");
@@ -44,7 +46,7 @@ public class App {
         try {
             initialize(fileName);
             set_socket();
-            multicast_start();
+            // multicast_start();
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -77,6 +79,9 @@ public class App {
                         received_event(receivedData);
                     } catch (IOException e) {
                         // System.out.println(e);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
                     }
                 }
             }
@@ -85,13 +90,15 @@ public class App {
         thread.start();
     }
 
-    private static void received_event(String data) {
+    private static void received_event(String data) throws InterruptedException {
         String[] splitedData = data.split(" ");
 
         String receivedId = splitedData[1];
         String receivedClock = splitedData[3];
 
+        sem.acquire();
         clock[Integer.parseInt(receivedId)] = Integer.parseInt(receivedClock);
+        sem.release();
 
         print_vetorial_clock("R", null, receivedId, receivedClock);
     }
@@ -116,7 +123,7 @@ public class App {
             packet = new DatagramPacket(resource, resource.length);
 
             try {
-                multicast_socket.setSoTimeout(5000);
+                multicast_socket.setSoTimeout(1000);
                 multicast_socket.receive(packet);
             } catch (Exception e) {
                 // TODO: handle exception
@@ -147,19 +154,23 @@ public class App {
                 System.out.println("NOT MATCH");
                 DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
                 socket.send(packetID);
-                Thread.sleep(3000);
+                // Thread.sleep(3000);
             }
         }
     }
 
-    private static void local_inc() {
+    private static void local_inc() throws InterruptedException {
+        sem.acquire();
         clock[myProcessId]++;
+        sem.release();
 
         print_vetorial_clock("L", null, null, null);
     }
 
-    private static void external_inc(int id) {
+    private static void external_inc(int id) throws InterruptedException {
+        sem.acquire();
         clock[myProcessId]++;
+        sem.release();
 
         Process p = processes.get(id);
 
@@ -181,7 +192,7 @@ public class App {
         socket.send(packet);
     }
 
-    public static void run() {
+    public static void run() throws InterruptedException {
         int countEvent = 0;
         // while (countEvent < myEvents) {
         while (countEvent < 10) {
@@ -232,6 +243,7 @@ public class App {
         myProcessId = Integer.parseInt(args[1]);
         otherHosts = new ArrayList<>();
         processes = new ArrayList<>();
+        sem = new Semaphore(1);
     }
 
     public static void set_socket() {
