@@ -97,7 +97,7 @@ public class App {
     }
 
     private static void multicast_start() throws IOException, InterruptedException {
-        MulticastSocket socket = new MulticastSocket(5000);
+        MulticastSocket multicast_socket = new MulticastSocket(5000);
         byte[] resource = new byte[1024];
         InetAddress address = InetAddress.getByName("230.0.0.1");
         DatagramPacket packet;
@@ -108,7 +108,7 @@ public class App {
 
         ready[myProcessId] = 1;
 
-        socket.joinGroup(address);
+        multicast_socket.joinGroup(address);
 
         while (true) {
             System.out.println("Waiting processes answer multicast...");
@@ -116,8 +116,8 @@ public class App {
             packet = new DatagramPacket(resource, resource.length);
 
             try {
-                socket.setSoTimeout(5000);
-                socket.receive(packet);
+                multicast_socket.setSoTimeout(5000);
+                multicast_socket.receive(packet);
             } catch (Exception e) {
                 // TODO: handle exception
             }
@@ -140,8 +140,8 @@ public class App {
                 System.out.println("MATCH");
                 DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
                 socket.send(packetID);
-                socket.leaveGroup(address);
-                socket.close();
+                multicast_socket.leaveGroup(address);
+                multicast_socket.close();
                 return;
             } else {
                 System.out.println("NOT MATCH");
