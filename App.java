@@ -47,6 +47,7 @@ public class App {
             initialize(fileName);
             set_socket();
             // multicast_start();
+            start();
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -154,6 +155,68 @@ public class App {
                 System.out.println("NOT MATCH");
                 DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
                 socket.send(packetID);
+                // Thread.sleep(3000);
+            }
+        }
+    }
+
+    private static void start() throws IOException, InterruptedException {
+        // MulticastSocket multicast_socket = new MulticastSocket(5000);
+        byte[] resource = new byte[1024];
+        InetAddress address = InetAddress.getByName("230.0.0.1");
+        DatagramPacket packet;
+
+        int totalProcess = otherHosts.size() + 1;
+        int[] ready = new int[totalProcess];
+        Arrays.fill(ready, 0);
+
+        ready[myProcessId] = 1;
+
+        // multicast_socket.joinGroup(address);
+
+        while (true) {
+            System.out.println("Waiting processes answer multicast...");
+
+            packet = new DatagramPacket(resource, resource.length);
+
+            try {
+                socket.setSoTimeout(1000);
+                socket.receive(packet);
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+
+            String received_process_id = new String(packet.getData(), 0, packet.getLength());
+
+            System.out.println("received_process_id " + received_process_id);
+
+            try {
+                int received_process_id_int = Integer.parseInt(received_process_id);
+
+                ready[received_process_id_int] = 1;
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+
+            boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
+
+            for (Process p : processes) {
+                System.out.println("Send to " + p.getAddress() + ":" + p.getPort());
+                DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, InetAddress.getByName(p.getAddress()) , Integer.parseInt(p.getPort()));
+                socket.send(packetID); 
+            }
+
+            if (match) {
+                System.out.println("MATCH");
+                // DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
+                // socket.send(packetID);
+                // socket.leaveGroup(address);
+                socket.close();
+                return;
+            } else {
+                System.out.println("NOT MATCH");
+                // DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
+                // socket.send(packetID);
                 // Thread.sleep(3000);
             }
         }
