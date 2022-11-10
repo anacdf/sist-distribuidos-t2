@@ -22,8 +22,8 @@ public class App {
     private static int myPort;
     private static Double myChance;
     private static int myEvents;
-    private static String myMinDelay;
-    private static String myMaxDelay;
+    private static float myMinDelay;
+    private static float myMaxDelay;
     private static List<String> otherHosts;
     private static List<Process> processes;
     private static int[] clock;
@@ -31,8 +31,6 @@ public class App {
     private static DatagramSocket socket;
     private static DatagramPacket packet;
     private static Semaphore sem;
-
-    private static ReceiveUDP receiveUDP;
 
     public static void main(String[] args) throws FileNotFoundException, SocketException, InterruptedException {
 
@@ -184,16 +182,16 @@ public class App {
 
             String received_process_id = new String(packet.getData(), 0, packet.getLength());
 
-            System.out.println("received_process_id " + received_process_id);
+            // System.out.println("received_process_id " + received_process_id);
 
             try {
                 int received_process_id_int = Integer.parseInt(received_process_id);
 
                 ready[received_process_id_int] = 1;
 
-                for (int i = 0; i < ready.length; i++) {
-                    System.out.println(ready[i]);
-                }
+                // for (int i = 0; i < ready.length; i++) {
+                //     System.out.println(ready[i]);
+                // }
             } catch (Exception e) {
                 // TODO: handle exception
             }
@@ -207,7 +205,7 @@ public class App {
             }
 
             if (match) {
-                socket.close();
+                // socket.close();
                 return;
             } 
         }
@@ -228,7 +226,8 @@ public class App {
 
         Process p = processes.get(id);
 
-        String message = "id " + id + " clock " + clock[id];
+        // String message = "id " + id + " clock " + clock[id];
+        String message = "id " + id + " clock " + clock[myProcessId];
 
         try {
             send_udp_message(message, p.getAddress(), p.getPort());
@@ -248,8 +247,8 @@ public class App {
 
     public static void run() throws InterruptedException {
         int countEvent = 0;
-        // while (countEvent < myEvents) {
-        while (countEvent < 10) {
+        while (countEvent < myEvents) {
+        // while (countEvent < 10) {
             float rnd = random_func(0.1, 0.9);
             if (rnd < myChance) {
                 int rndId = new Random().ints(0, (otherHosts.size())).findFirst().getAsInt();
@@ -258,6 +257,9 @@ public class App {
                 local_inc();
             }
             countEvent++;
+
+            float rnd_delay = random_func(myMinDelay, myMaxDelay);
+            Thread.sleep((long) rnd_delay);
         }
     }
 
@@ -329,8 +331,8 @@ public class App {
                 myPort = Integer.parseInt(processLine[2]);
                 myChance = Double.parseDouble(processLine[3]);
                 myEvents = Integer.parseInt(processLine[4]);
-                myMinDelay = processLine[5];
-                myMaxDelay = processLine[6];
+                myMinDelay = Float.parseFloat(processLine[5]);
+                myMaxDelay = Float.parseFloat(processLine[6]);
 
             } else {
                 otherHosts.add(processLine[0]);
