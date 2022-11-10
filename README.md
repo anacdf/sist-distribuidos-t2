@@ -5,6 +5,7 @@
 - ANA CAROLINA FERREIRA
 - FELIPE FAHRION
 - VINICIUS JAGGI
+- ROBSON FELIPE BITTENCOURT
 
 
 O segundo trabalho da disciplina consiste em desenvolver um programa distribuído que implemente relógios vetoriais para ordenaçao de eventos (com ordem total). 
