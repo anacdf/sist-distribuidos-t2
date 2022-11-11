@@ -55,12 +55,6 @@ public class App {
         receive_udp_thread();
 
         run();
-
-        // new ReceiveUDP(myPort).start();
-
-        // debug_method();
-
-        // start_multicast();
     }
 
     private static void receive_udp_thread() {
@@ -74,7 +68,6 @@ public class App {
                         socket.receive(packet);
 
                         String receivedData = new String(packet.getData(), 0, packet.getLength());
-
                         received_event(receivedData);
                     } catch (IOException e) {
                         // System.out.println(e);
@@ -90,72 +83,26 @@ public class App {
     }
 
     private static void received_event(String data) throws InterruptedException {
-        String[] splitedData = data.split(" ");
+        try {
+            String[] splitedData = data.split(" ");
+            int receivedId = Integer.parseInt(splitedData[1]);
+            int receivedClock = Integer.parseInt(splitedData[3]);
 
-        String receivedId = splitedData[1];
-        String receivedClock = splitedData[3];
-
-        sem.acquire();
-        clock[Integer.parseInt(receivedId)] = Integer.parseInt(receivedClock);
-        sem.release();
-
-        print_vetorial_clock("R", null, receivedId, receivedClock);
-    }
-
-    private static void multicast_start() throws IOException, InterruptedException {
-        MulticastSocket multicast_socket = new MulticastSocket(5000);
-        byte[] resource = new byte[1024];
-        InetAddress address = InetAddress.getByName("230.0.0.1");
-        DatagramPacket packet;
-
-        int totalProcess = otherHosts.size() + 1;
-        int[] ready = new int[totalProcess];
-        Arrays.fill(ready, 0);
-
-        ready[myProcessId] = 1;
-
-        multicast_socket.joinGroup(address);
-
-        while (true) {
-            System.out.println("Waiting processes answer multicast...");
-
-            packet = new DatagramPacket(resource, resource.length);
-
-            try {
-                multicast_socket.setSoTimeout(1000);
-                multicast_socket.receive(packet);
-            } catch (Exception e) {
-                // TODO: handle exception
-            }
-
-            String received_process_id = new String(packet.getData(), 0, packet.getLength());
-
-            System.out.println("received_process_id " + received_process_id);
-
-            try {
-                int received_process_id_int = Integer.parseInt(received_process_id);
-
-                ready[received_process_id_int] = 1;
-            } catch (Exception e) {
-                // TODO: handle exception
-            }
-
-            boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
-
-            if (match) {
-                System.out.println("MATCH");
-                DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
-                socket.send(packetID);
-                multicast_socket.leaveGroup(address);
-                multicast_socket.close();
-                return;
+            if (receivedId == myProcessId) {
+                sem.acquire();
+                clock[myProcessId]++;
+                sem.release();
             } else {
-                System.out.println("NOT MATCH");
-                DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, address, 5000);
-                socket.send(packetID);
-                // Thread.sleep(3000);
+                sem.acquire();
+                clock[receivedId] = receivedClock;
+                sem.release();
+                print_vetorial_clock("R", null, splitedData[1], splitedData[3]);
             }
+
+        } catch (Exception e) {
+            // TODO: handle exception
         }
+
     }
 
     private static void start() throws IOException, InterruptedException {
@@ -168,9 +115,8 @@ public class App {
 
         ready[myProcessId] = 1;
 
+        System.out.println("Waiting processes answer multicast...");
         while (true) {
-            System.out.println("Waiting processes answer multicast...");
-
             packet = new DatagramPacket(resource, resource.length);
 
             try {
@@ -188,26 +134,25 @@ public class App {
                 int received_process_id_int = Integer.parseInt(received_process_id);
 
                 ready[received_process_id_int] = 1;
-
-                // for (int i = 0; i < ready.length; i++) {
-                //     System.out.println(ready[i]);
-                // }
             } catch (Exception e) {
                 // TODO: handle exception
             }
 
             boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
 
-            for (Process p : processes) {
-                // System.out.println("Send to " + p.getAddress() + ":" + p.getPort());
-                DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(), Integer.toString(myProcessId).getBytes().length, InetAddress.getByName(p.getAddress()) , Integer.parseInt(p.getPort()));
-                socket.send(packetID); 
-            }
-
             if (match) {
-                // socket.close();
+                System.out.println("Ready!");
+                Thread.sleep(3000);
                 return;
-            } 
+            } else {
+                for (Process p : processes) {
+                    // System.out.println("Send to " + p.getAddress() + ":" + p.getPort());
+                    DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(),
+                            Integer.toString(myProcessId).getBytes().length, InetAddress.getByName(p.getAddress()),
+                            Integer.parseInt(p.getPort()));
+                    socket.send(packetID);
+                }
+            }
         }
     }
 
@@ -225,18 +170,19 @@ public class App {
         sem.release();
 
         Process p = processes.get(id);
-
-        // String message = "id " + id + " clock " + clock[id];
-        String message = "id " + id + " clock " + clock[myProcessId];
-
+        
         try {
-            send_udp_message(message, p.getAddress(), p.getPort());
+            System.out.println("ID " + id + " myPRocessID " + myProcessId);
+            if (id != myProcessId) {
+                String message = "id " + myProcessId + " clock " + clock[myProcessId];
+                send_udp_message(message, p.getAddress(), p.getPort());
+                print_vetorial_clock("S", String.valueOf(id), null, null);
+            }
         } catch (IOException e) {
             System.out.println("Error send UDP message!");
             System.out.println(e);
         }
 
-        print_vetorial_clock("S", String.valueOf(id), null, null);
     }
 
     public static void send_udp_message(String message, String ip, String port) throws IOException {
@@ -248,10 +194,10 @@ public class App {
     public static void run() throws InterruptedException {
         int countEvent = 0;
         while (countEvent < myEvents) {
-        // while (countEvent < 10) {
-            float rnd = random_func(0.1, 0.9);
+        // while (countEvent < 10) {   
+            float rnd = random_func(0, 1.0);
             if (rnd < myChance) {
-                int rndId = new Random().ints(0, (otherHosts.size())).findFirst().getAsInt();
+                int rndId = new Random().ints(0, clock.length - 1).findFirst().getAsInt();
                 external_inc(rndId);
             } else {
                 local_inc();
