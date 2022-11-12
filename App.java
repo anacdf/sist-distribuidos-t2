@@ -6,16 +6,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
-
-import threads.ReceiveUDP;
-
+import model.Process;
 public class App {
     private static int myProcessId;
     private static String myIp;
@@ -88,16 +85,11 @@ public class App {
             int receivedId = Integer.parseInt(splitedData[1]);
             int receivedClock = Integer.parseInt(splitedData[3]);
 
-            if (receivedId == myProcessId) {
-                sem.acquire();
-                clock[myProcessId]++;
-                sem.release();
-            } else {
-                sem.acquire();
-                clock[receivedId] = receivedClock;
-                sem.release();
-                print_vetorial_clock("R", null, splitedData[1], splitedData[3]);
-            }
+            sem.acquire();
+            clock[myProcessId]++;
+            clock[receivedId] = receivedClock;
+            sem.release();
+            print_vetorial_clock("R", null, splitedData[1], splitedData[3]);
 
         } catch (Exception e) {
             // TODO: handle exception
@@ -115,7 +107,7 @@ public class App {
 
         ready[myProcessId] = 1;
 
-        System.out.println("Waiting processes answer multicast...");
+        System.out.println("Waiting processes answer...");
         while (true) {
             packet = new DatagramPacket(resource, resource.length);
 
@@ -127,8 +119,6 @@ public class App {
             }
 
             String received_process_id = new String(packet.getData(), 0, packet.getLength());
-
-            // System.out.println("received_process_id " + received_process_id);
 
             try {
                 int received_process_id_int = Integer.parseInt(received_process_id);
@@ -146,7 +136,6 @@ public class App {
                 return;
             } else {
                 for (Process p : processes) {
-                    // System.out.println("Send to " + p.getAddress() + ":" + p.getPort());
                     DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(),
                             Integer.toString(myProcessId).getBytes().length, InetAddress.getByName(p.getAddress()),
                             Integer.parseInt(p.getPort()));
@@ -172,12 +161,11 @@ public class App {
         Process p = processes.get(id);
         
         try {
-            System.out.println("ID " + id + " myPRocessID " + myProcessId);
-            if (id != myProcessId) {
+            // if (id != myProcessId) {
                 String message = "id " + myProcessId + " clock " + clock[myProcessId];
                 send_udp_message(message, p.getAddress(), p.getPort());
                 print_vetorial_clock("S", String.valueOf(id), null, null);
-            }
+            // }
         } catch (IOException e) {
             System.out.println("Error send UDP message!");
             System.out.println(e);
@@ -194,7 +182,6 @@ public class App {
     public static void run() throws InterruptedException {
         int countEvent = 0;
         while (countEvent < myEvents) {
-        // while (countEvent < 10) {   
             float rnd = random_func(0, 1.0);
             if (rnd < myChance) {
                 int rndId = new Random().ints(0, clock.length - 1).findFirst().getAsInt();
@@ -287,31 +274,5 @@ public class App {
         }
 
         br.close();
-    }
-
-    public static void debug_method() {
-        System.out.println("processes");
-        for (Process i : processes) {
-            System.out.println(i);
-        }
-
-        System.out.println();
-
-        System.out.println("print other hosts");
-        for (String i : otherHosts) {
-            System.out.println(i);
-        }
-
-        System.out.println("clock");
-        for (int i : clock) {
-            System.out.print(i);
-        }
-
-        System.out.println();
-
-        System.out.println("Test print_vetorial_clock ");
-        print_vetorial_clock("L", null, null, null);
-        print_vetorial_clock("S", "1", null, null);
-        print_vetorial_clock("R", null, "3", "28");
     }
 }

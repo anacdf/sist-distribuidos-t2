@@ -53,13 +53,13 @@ relógio lógico recebido com a mensagem.
 ### Como rodar
 
 ```
-java App <config_file.json> <process_id>
+javac *.java && java App <config_file.json> <process_id>
 
 ```
 
 ### Exemplos
 
 ```
-java App config_sample.txt 0
+javac *.java && java App config_sample.txt 0
 
 ```
