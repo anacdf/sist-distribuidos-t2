@@ -47,7 +47,7 @@ seguinte sintaxe para formatar a saída:
 - Abrir alguns terminais e rodar o comando abaixo alterando o process_id 
 
 ```
-javac *.java && java App <config_file.json> <process_id>
+javac *.java && java App <config_file.json> <my_process_id>
 
 ```
 

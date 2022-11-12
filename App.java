@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 import model.Process;
+
 public class App {
     private static int myProcessId;
     private static String myIp;
@@ -41,10 +42,9 @@ public class App {
         try {
             initialize(fileName);
             set_socket();
-            // multicast_start();
             start();
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
 
         start_local_clock();
@@ -67,9 +67,8 @@ public class App {
                         String receivedData = new String(packet.getData(), 0, packet.getLength());
                         received_event(receivedData);
                     } catch (IOException e) {
-                        // System.out.println(e);
+                        e.printStackTrace();
                     } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
@@ -92,7 +91,7 @@ public class App {
             print_vetorial_clock("R", null, splitedData[1], splitedData[3]);
 
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         }
 
     }
@@ -115,7 +114,7 @@ public class App {
                 socket.setSoTimeout(1000);
                 socket.receive(packet);
             } catch (Exception e) {
-                // TODO: handle exception
+                e.printStackTrace();
             }
 
             String received_process_id = new String(packet.getData(), 0, packet.getLength());
@@ -125,7 +124,7 @@ public class App {
 
                 ready[received_process_id_int] = 1;
             } catch (Exception e) {
-                // TODO: handle exception
+                e.printStackTrace();
             }
 
             boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
@@ -159,16 +158,14 @@ public class App {
         sem.release();
 
         Process p = processes.get(id);
-        
+
         try {
-            // if (id != myProcessId) {
-                String message = "id " + myProcessId + " clock " + clock[myProcessId];
-                send_udp_message(message, p.getAddress(), p.getPort());
-                print_vetorial_clock("S", String.valueOf(id), null, null);
-            // }
+            String message = "id " + myProcessId + " clock " + clock[myProcessId];
+            send_udp_message(message, p.getAddress(), p.getPort());
+            print_vetorial_clock("S", String.valueOf(id), null, null);
         } catch (IOException e) {
             System.out.println("Error send UDP message!");
-            System.out.println(e);
+            e.printStackTrace();
         }
 
     }
@@ -239,7 +236,7 @@ public class App {
         try {
             socket = new DatagramSocket(myPort);
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
 
