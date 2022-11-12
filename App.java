@@ -58,10 +58,12 @@ public class App {
     }
 
     private static void receive_udp_thread() {
+        System.out.println("receive_udp_thread");
         byte[] resource = new byte[1024];
 
         Thread thread = new Thread() {
             public void run() {
+                System.out.println("run");
                 while (true) {
                     try {
                         packet = new DatagramPacket(resource, resource.length);
@@ -83,10 +85,13 @@ public class App {
     }
 
     private static void received_event(String data) throws InterruptedException {
+        System.out.println("received_event 88 - data " + data);
         try {
             String[] splitedData = data.split(" ");
             int receivedId = Integer.parseInt(splitedData[1]);
             int receivedClock = Integer.parseInt(splitedData[3]);
+            System.out.println("received_event - receivedId " + receivedId);
+            System.out.println("received_event - receivedClock " + receivedClock);
 
             if (receivedId == myProcessId) {
                 sem.acquire();
@@ -106,6 +111,7 @@ public class App {
     }
 
     private static void start() throws IOException, InterruptedException {
+        System.out.println("start");
         byte[] resource = new byte[1024];
         DatagramPacket packet;
 
@@ -113,10 +119,13 @@ public class App {
         int[] ready = new int[totalProcess];
         Arrays.fill(ready, 0);
 
+        System.out.println("start - meu processo começa contando com 1");
+
         ready[myProcessId] = 1;
 
         System.out.println("Waiting processes answer multicast...");
         while (true) {
+            System.out.println("start - while");
             packet = new DatagramPacket(resource, resource.length);
 
             try {
@@ -124,16 +133,20 @@ public class App {
                 socket.receive(packet);
             } catch (Exception e) {
                 // TODO: handle exception
+                e.printStackTrace();
             }
 
             String received_process_id = new String(packet.getData(), 0, packet.getLength());
 
-            // System.out.println("received_process_id " + received_process_id);
+            System.out.println("start - received_process_id " + received_process_id);
 
             try {
                 int received_process_id_int = Integer.parseInt(received_process_id);
 
+            System.out.println("start - received_process_id_int " + received_process_id_int);
+
                 ready[received_process_id_int] = 1;
+                System.out.println("start - atualiza ready na posicao " + received_process_id_int);
             } catch (Exception e) {
                 // TODO: handle exception
             }
@@ -141,12 +154,12 @@ public class App {
             boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
 
             if (match) {
-                System.out.println("Ready!");
+                System.out.println("match - Ready!");
                 Thread.sleep(3000);
                 return;
             } else {
                 for (Process p : processes) {
-                    // System.out.println("Send to " + p.getAddress() + ":" + p.getPort());
+                    System.out.println("Send to " + p.getAddress() + ":" + p.getPort());
                     DatagramPacket packetID = new DatagramPacket(Integer.toString(myProcessId).getBytes(),
                             Integer.toString(myProcessId).getBytes().length, InetAddress.getByName(p.getAddress()),
                             Integer.parseInt(p.getPort()));
@@ -157,6 +170,7 @@ public class App {
     }
 
     private static void local_inc() throws InterruptedException {
+        System.out.println("local_inc");
         sem.acquire();
         clock[myProcessId]++;
         sem.release();
@@ -165,6 +179,7 @@ public class App {
     }
 
     private static void external_inc(int id) throws InterruptedException {
+        System.out.println("external_inc");
         sem.acquire();
         clock[myProcessId]++;
         sem.release();
@@ -192,14 +207,17 @@ public class App {
     }
 
     public static void run() throws InterruptedException {
+        System.out.println("run");
         int countEvent = 0;
         while (countEvent < myEvents) {
         // while (countEvent < 10) {   
             float rnd = random_func(0, 1.0);
             if (rnd < myChance) {
+                System.out.println("run - if (rnd < myChance)");
                 int rndId = new Random().ints(0, clock.length - 1).findFirst().getAsInt();
                 external_inc(rndId);
             } else {
+                System.out.println("run - else");
                 local_inc();
             }
             countEvent++;
@@ -234,6 +252,7 @@ public class App {
     }
 
     public static void start_local_clock() {
+        System.out.println("start_local_clock");
         int totalProcess = otherHosts.size() + 1; // size of other process + my host
 
         clock = new int[totalProcess];
@@ -249,6 +268,7 @@ public class App {
     }
 
     public static void set_socket() {
+        System.out.println("set_socket");
         try {
             socket = new DatagramSocket(myPort);
         } catch (Exception e) {
@@ -261,7 +281,7 @@ public class App {
     }
 
     public static void initialize(String fileName) throws IOException {
-
+        System.out.println("initialize");
         File file = new File(fileName);
         BufferedReader br = new BufferedReader(new FileReader(file));
 
@@ -283,6 +303,12 @@ public class App {
             } else {
                 otherHosts.add(processLine[0]);
                 processes.add(new Process(processLine[0], processLine[1], processLine[2]));
+                System.out.println(
+                    "initialize - otherHosts" + " " + otherHosts
+                );
+                System.out.println(
+                    "initialize - processes" + " " + processes.size()
+                );
             }
         }
 
