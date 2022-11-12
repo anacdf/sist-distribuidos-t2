@@ -85,7 +85,7 @@ public class App {
     }
 
     private static void received_event(String data) throws InterruptedException {
-        System.out.println("received_event 88 - data " + data);
+        // System.out.println("received_event 88 - data " + data);
         try {
             String[] splitedData = data.split(" ");
             int receivedId = Integer.parseInt(splitedData[1]);
@@ -119,7 +119,7 @@ public class App {
         int[] ready = new int[totalProcess];
         Arrays.fill(ready, 0);
 
-        System.out.println("start - meu processo começa contando com 1");
+        System.out.println("start - meu processo começa contando com 1 - id: " + myProcessId);
 
         ready[myProcessId] = 1;
 
@@ -146,7 +146,8 @@ public class App {
             System.out.println("start - received_process_id_int " + received_process_id_int);
 
                 ready[received_process_id_int] = 1;
-                System.out.println("start - atualiza ready na posicao " + received_process_id_int);
+                System.out.println("start - atualiza ready na posicao " + received_process_id_int + " ready[received_process_id_int]:" + ready[received_process_id_int]);
+  
             } catch (Exception e) {
                 // TODO: handle exception
             }
@@ -190,6 +191,11 @@ public class App {
             System.out.println("ID " + id + " myPRocessID " + myProcessId);
             if (id != myProcessId) {
                 String message = "id " + myProcessId + " clock " + clock[myProcessId];
+                
+
+                System.out.println("external_inc - if (id != myProcessId), message " + message);
+                System.out.println("external_inc - if (id != myProcessId), send_udp_message to " + p.getAddress() + ", " + p.getPort());
+
                 send_udp_message(message, p.getAddress(), p.getPort());
                 print_vetorial_clock("S", String.valueOf(id), null, null);
             }
@@ -228,6 +234,7 @@ public class App {
     }
 
     private static void print_vetorial_clock(String event, String nodeTo, String nodeFrom, String clockValue) {
+
         String vetorialCloclk = myProcessId + " [ ";
 
         for (int i : clock) {
@@ -247,6 +254,7 @@ public class App {
         if (event.equals("R")) {
             vetorialCloclk += "R " + nodeFrom + " " + clockValue;
         }
+        System.out.println("vetorial_clock " + event + ", " + nodeFrom + ", " + nodeTo + ", " + clockValue);
 
         System.out.println(vetorialCloclk);
     }
