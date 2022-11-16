@@ -30,7 +30,7 @@ public class App {
     private static DatagramPacket packet;
     private static Semaphore sem;
 
-    public static void main(String[] args) throws FileNotFoundException, SocketException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
         if (args.length < 2) {
             System.out.println("Missing parameters");
@@ -87,7 +87,7 @@ public class App {
             if(receivedClock == -1){
                 socket.close();
                 System.out.println("Process " + receivedId + " is done!");
-                System.exit(1);
+                // System.exit(1);
             } else {             
                 sem.acquire();
             clock[myProcessId]++;
@@ -184,8 +184,7 @@ public class App {
 
     public static void run() throws InterruptedException, IOException {
         int countEvent = 0;
-        // while (countEvent < myEvents) {
-        while (countEvent < 20) {
+        while (countEvent < myEvents) {
             float rnd = random_func(0, 1.0);
             if (rnd < myChance) {
                 int rndId = new Random().ints(0, clock.length - 1).findFirst().getAsInt();
