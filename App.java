@@ -44,7 +44,7 @@ public class App {
             set_socket();
             start();
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
 
         start_local_clock();
@@ -67,9 +67,9 @@ public class App {
                         String receivedData = new String(packet.getData(), 0, packet.getLength());
                         received_event(receivedData);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        // e.printStackTrace();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        // e.printStackTrace();
                     }
                 }
             }
@@ -84,14 +84,20 @@ public class App {
             int receivedId = Integer.parseInt(splitedData[1]);
             int receivedClock = Integer.parseInt(splitedData[3]);
 
-            sem.acquire();
+            if(receivedClock == -1){
+                socket.close();
+                System.out.println("Process " + receivedId + " is done!");
+                System.exit(1);
+            } else {             
+                sem.acquire();
             clock[myProcessId]++;
-            clock[receivedId] = receivedClock;
-            sem.release();
-            print_vetorial_clock("R", null, splitedData[1], splitedData[3]);
+                clock[receivedId] = receivedClock;
+                sem.release();
+                print_vetorial_clock("R", null, splitedData[1], splitedData[3]);
+            }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
 
     }
@@ -114,7 +120,7 @@ public class App {
                 socket.setSoTimeout(1000);
                 socket.receive(packet);
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
 
             String received_process_id = new String(packet.getData(), 0, packet.getLength());
@@ -124,7 +130,7 @@ public class App {
 
                 ready[received_process_id_int] = 1;
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
 
             boolean match = Arrays.stream(ready).allMatch(s -> s == 1);
@@ -176,9 +182,10 @@ public class App {
         socket.send(packet);
     }
 
-    public static void run() throws InterruptedException {
+    public static void run() throws InterruptedException, IOException {
         int countEvent = 0;
-        while (countEvent < myEvents) {
+        // while (countEvent < myEvents) {
+        while (countEvent < 20) {
             float rnd = random_func(0, 1.0);
             if (rnd < myChance) {
                 int rndId = new Random().ints(0, clock.length - 1).findFirst().getAsInt();
@@ -191,6 +198,13 @@ public class App {
             float rnd_delay = random_func(myMinDelay, myMaxDelay);
             Thread.sleep((long) rnd_delay);
         }
+
+        for (Process p : processes) {
+            String message = "id " + myProcessId + " clock " + "-1";
+            send_udp_message(message, p.getAddress(), p.getPort());            
+        }
+        System.out.println("Done!");
+        System.exit(1);
     }
 
     private static void print_vetorial_clock(String event, String nodeTo, String nodeFrom, String clockValue) {
@@ -236,7 +250,7 @@ public class App {
         try {
             socket = new DatagramSocket(myPort);
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
     }
 
