@@ -85,7 +85,8 @@ public class App {
             int receivedClock = Integer.parseInt(splitedData[3]);
 
             if(receivedClock == -1){
-                socket.close();
+                // socket.close();
+                processes.remove(receivedId);
                 System.out.println("Process " + receivedId + " is done!");
                 // System.exit(1);
             } else {             
